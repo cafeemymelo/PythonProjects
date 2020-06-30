@@ -1,5 +1,8 @@
 import tkinter as tk
 import tkinter.ttk as ttk
+from datetime import datetime
+import os
+import csv
 
 
 # Start coding here
@@ -21,7 +24,6 @@ class LabelInput(tk.Frame):
             self.label = ttk.Label(self, text=label, **label_args)
             self.label.grid(row=0, column=0, sticky=(tk.W + tk.E))
             input_args["textvariable"] = input_var
-
         self.input = input_class(self, **input_args)
         self.input.grid(row=1, column=0, sticky=(tk.W + tk.E))
 
@@ -41,7 +43,22 @@ class LabelInput(tk.Frame):
         except (TypeError, tk.TclError):
             return ''
 
-
+    def set(self, value, *args, **kwargs):
+        if type(self.variable) == tk.BooleanVar:
+            self.variable.set(bool(value))
+        elif self.variable:
+            self.variable.set(value, *args, **kwargs)
+        elif type(self.input) in (ttk.Checkbutton, ttk.Radiobutton):
+            if value:
+                self.input.select()
+            else:
+                self.input.deselect()
+        elif type(self.input) == tk.Text:
+            self.input.delete('1.0', tk.END)
+            self.input.insert('1.0', value)
+        else:  # input must be an Entry-type widget with no variable
+            self.input.delete(0, tk.END)
+            self.input.insert(0, value)
 
 
 class DataRecordForm(tk.Frame):
@@ -84,9 +101,19 @@ class DataRecordForm(tk.Frame):
                                              input_var=tk.DoubleVar(),
                                              input_args={"from_": 0.5, "to": 52.0, "increment": 0.01})
         self.inputs['Humidity'].grid(row=0, column=0)
-        self.inputs['Equipment Fault'] = LabelInput(environmentinfo, "Equipment Fault", input_class=ttk.Combobox,
+        self.inputs['Light'] = LabelInput(environmentinfo, "Light (klx)", input_class=ttk.Spinbox,
+                                          input_var=tk.DoubleVar(),
+                                          input_args={"from_": 0, "to": 40, "increment": 0.01})
+        self.inputs['Light'].grid(row=0, column=1)
+        self.inputs['Temperature'] = LabelInput(environmentinfo, "Temperature (ºC)", input_class=ttk.Spinbox,
+                                                input_var=tk.DoubleVar(),
+                                                input_args={"from_": 4, "to": 40, "increment": 0.01})
+        self.inputs['Temperature'].grid(row=0, column=2)
+        self.inputs['Equipment Fault'] = LabelInput(environmentinfo, "Equipment Fault", input_class=ttk.Checkbutton,
                                                     input_var=tk.BooleanVar())
         self.inputs['Equipment Fault'].grid(row=1, column=0, columnspan=3)
+
+        environmentinfo.grid(row=1, column=0, sticky=(tk.W + tk.E))
 
         # plant information
         plantinfo = tk.LabelFrame(self, text="Plant Data")
@@ -101,18 +128,20 @@ class DataRecordForm(tk.Frame):
         self.inputs['Fruit'] = LabelInput(plantinfo, "Fruit", input_class=ttk.Spinbox, input_var=tk.IntVar(),
                                           input_args={"from_": 0, "to": 1000})
         self.inputs['Fruit'].grid(row=0, column=2)
-        self.inputs['Min height'] = LabelInput(plantinfo, "Min height", input_class=ttk.Spinbox,
+        self.inputs['Min height'] = LabelInput(plantinfo, "Min height (cm)", input_class=ttk.Spinbox,
                                                input_var=tk.DoubleVar(),
-                                               input_args={"from_": 0, "to": 1000})
+                                               input_args={"from_": 0.0, "to": 1000.0, "increment": 0.01})
         self.inputs['Min height'].grid(row=1, column=0)
-        self.inputs['Max height'] = LabelInput(plantinfo, "Max height", input_class=ttk.Spinbox,
+        self.inputs['Max height'] = LabelInput(plantinfo, "Max height (cm)", input_class=ttk.Spinbox,
                                                input_var=tk.DoubleVar(),
-                                               input_args={"from_": 0, "to": 1000})
-        self.inputs['Max height'].grid(row=1, column=0)
-        self.inputs['Median height'] = LabelInput(plantinfo, "Median height", input_class=ttk.Spinbox,
+                                               input_args={"from_": 0.0, "to": 1000.0, "increment": 0.01})
+        self.inputs['Max height'].grid(row=1, column=1)
+        self.inputs['Median height'] = LabelInput(plantinfo, "Median height (cm)", input_class=ttk.Spinbox,
                                                   input_var=tk.DoubleVar(),
-                                                  input_args={"from_": 0, "to": 1000})
-        self.inputs['Median height'].grid(row=1, column=0)
+                                                  input_args={"from_": 0.0, "to": 1000.0, "increment": 0.01})
+        self.inputs['Median height'].grid(row=1, column=2)
+
+        plantinfo.grid(row=2, column=0, sticky=(tk.W + tk.E))
 
         # Note section
         self.inputs['Notes'] = LabelInput(self, "Notes", input_class=tk.Text, input_args={"width": 75, "height": 10})
@@ -127,7 +156,7 @@ class DataRecordForm(tk.Frame):
 
     def reset(self):
         for widget in self.inputs.values():
-            widget.set(' ')
+            widget.set('')
 
 
 class Application(tk.Tk):
@@ -152,10 +181,20 @@ class Application(tk.Tk):
         self.statusbar.grid(sticky=(tk.W + tk.E), row=3, padx=10)
 
     def on_save(self):
-        pass
+        datestring = datetime.today().strftime("%Y-%m-%d")
+        filename = "abq_data_record_{}.csv".format(datestring)
+        newfile = not os.path.exists(filename)
+        data = self.recordform.get()
+
+        # opens the file in append mode. We can't read or edit any existing lines in the
+        # file, only add at the end of it.
+        with open(filename, 'a') as fh:
+            csvwriter = csv.DictWriter(fh, fieldnames=data.keys())
+            if newfile:
+                csvwriter.writeheader()
+            csvwriter.writerow(data)
 
 
 if __name__ == "__main__":
     app = Application()
     app.mainloop()
-
