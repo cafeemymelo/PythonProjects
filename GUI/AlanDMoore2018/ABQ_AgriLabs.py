@@ -9,7 +9,7 @@ class LabelInput(tk.Frame):
 
     def __init__(self, parent, label="", input_class=ttk.Entry, input_var=None, input_args=None, label_args=None,
                  *args, **kwargs):
-        super.__init__(master=parent, *args, **kwargs)
+        super().__init__(master=parent, *args, **kwargs)
         input_args = input_args or {}
         label_args = label_args or {}
         self.variable = input_var
@@ -28,7 +28,7 @@ class LabelInput(tk.Frame):
         self.columnconfigure(0, weight=1)
 
     def grid(self, sticky=(tk.W + tk.E), **kwargs):
-        super.grid(sticky=sticky, **kwargs)
+        super().grid(sticky=sticky, **kwargs)
 
     def get(self):
         try:
@@ -40,6 +40,8 @@ class LabelInput(tk.Frame):
                 return self.input.get()
         except (TypeError, tk.TclError):
             return ''
+
+
 
 
 class DataRecordForm(tk.Frame):
@@ -125,10 +127,10 @@ class DataRecordForm(tk.Frame):
 
     def reset(self):
         for widget in self.inputs.values():
-            widget.set('')
+            widget.set(' ')
 
 
-class Application(tk.TK):
+class Application(tk.Tk):
     """
     Application root window
     """
@@ -156,3 +158,4 @@ class Application(tk.TK):
 if __name__ == "__main__":
     app = Application()
     app.mainloop()
+
