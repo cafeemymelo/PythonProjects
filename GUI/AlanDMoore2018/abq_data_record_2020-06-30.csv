@@ -1,0 +1,5 @@
+Date,Time,Technician,Lab,Plot,Seed Sample,Humidity,Light,Temperature,Equipment Fault,Plants,Blossoms,Fruit,Min height,Max height,Median height,Notes
+2020-01-20,12:00,John,D,1,test,20.36,30.09,23.08,False,12,4,87,1.51,70.41,36.13,"test 1
+"
+2020-01-23,16:00,Jane,A,9,test,2.03,38.63,26.06,True,7,5,34,0.02,50.03,25.02,"test 2
+"
